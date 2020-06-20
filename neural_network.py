@@ -46,12 +46,6 @@ class NeuralNetwork():
 
         #Calculating the activations of each layer accumulating to the output
         for layer in range(0, self.layers-1):
-            #print(f"Layer: {layer}")
-            #print("Weights of layer: ", self.weights[layer])
-            #print("A input: ", a)
-            #print("Biases at this point: ", self.biases[layer])
-            #print("Result: ", self.sigmoid(np.dot(self.weights[layer], a) + self.biases[layer]))
-            #print("-"*70)
             #sigmoid(w*a + b)
             a = self.sigmoid(np.dot(self.weights[layer], a) + self.biases[layer])
 
@@ -73,8 +67,7 @@ class NeuralNetwork():
         6. Return the weight and biases derivatives as ndarrays"""
 
         a = x
-        #print("a", a)
-        a_by_layer = [x] #Holds actiavtions of each layer for later equations
+        a_by_layer = [x] #Holds activations of each layer for later equations
         z_by_layer = [] #Holds z of each layer for later equations
 
         #1. Feedforward layer by layer
@@ -87,45 +80,23 @@ class NeuralNetwork():
             a_by_layer.append(a)
 
         #2. Compute error of output layer
-        #print(a_by_layer[-1])
-        #print(y)
-        #print(self.cost_deriv(y, a_by_layer[-1]))
-        #print(f"Z_by_layer[-1]: {z_by_layer[-1]}")
-        #print(f"Sigmoid prime shit: {np.array(self.sigmoid_prime(z_by_layer[-1]))}")
-        #print("-" * 50)
         output_layer_error = self.cost_deriv(y, a_by_layer[-1]) * self.sigmoid_prime(z_by_layer[-1])
 
         #3. Find errors of previous layers
-        #Error by layer holds [outputerror, outputlayer-1error,..., layer 2]
         error_by_layer = [output_layer_error]
-        #print(f"Output layer error: {error_by_layer}")
         for l in range(1, self.layers - 1):
-            #print(f"L is {l}")
-            #print("Weights transpose shit: ", self.weights[-l].transpose())
-            #print(f"Error by layer {self.layers - l + 1}: {error_by_layer[l-1]}")
-            #print(f"Dot product: {np.dot(self.weights[-l].transpose(), error_by_layer[l-1])}")
-            #print(f"Sigmoid_prime shit again: {self.sigmoid_prime(z_by_layer[-l-1])}")
-            #print("-" * 80)
             error_by_layer.append(np.dot(self.weights[-l].transpose(), error_by_layer[l-1]) * self.sigmoid_prime(z_by_layer[-l-1]))
-
-        #print("Error by layer", error_by_layer)
-        #print("-" * 70)
+            
         #4. Assign the layer errors in correct order (reversed) to biases derivs
         dcost_dbiases = [error_by_layer[-(layer+1)] for layer in range(len(error_by_layer))]
-        #print("dcost_dbiases: ", dcost_dbiases)
-        #print("-" * 70)
+
         #5. Assigning weight derivatives
         dcost_dweights = [np.zeros(np.shape(w)) for w in self.weights]
         for layer in range(self.layers-1):
             for j in range(len(self.weights[layer])):
                 for k in range(len(self.weights[layer][j])):
-                    #print("a_by_layer[layer][k]", a_by_layer[layer][k])
-                    #print("dcost_dbiases[layer][j]", dcost_dbiases[layer][j])
                     dcost_dweights[layer][j][k] = a_by_layer[layer][k] * dcost_dbiases[layer][j]
-                    #print("dcost_dweights[layer][j][k]", dcost_dweights[layer][j][k])
 
-            #print(f"dcost_dweights[{layer}]: {dcost_dweights[layer]}")
-        #print("-"*80)
         #6. Return the partial derivatives in shapes of self.weights and biases
         return dcost_dweights, dcost_dbiases
 
@@ -143,14 +114,11 @@ class NeuralNetwork():
         4. Minus the averages for each weight and bias using the learn_rate"""
 
         total_weight_derivs = [np.zeros(np.shape(w)) for w in self.weights]
-        #print(f"Self.biases shit: {self.biases}")
         total_bias_derivs = [np.zeros(np.shape(b)) for b in self.biases]
-        #print(f"total_bias_derivs shape: {total_bias_derivs}")
 
         for example in batch:
             #Backpropagate example
             weight_derivs, bias_derivs = self.backpropagation(example[0], example[1])
-            #print(f"bias_derivs: {bias_derivs}")
             #Add derivatives to totals
             total_weight_derivs = [twd + wd for twd, wd in
                                     zip(total_weight_derivs, weight_derivs)]
@@ -163,13 +131,8 @@ class NeuralNetwork():
         #Gradient descent for all weights and biases
         self.weights = [w - learn_rate * (twd / n) for w, twd in
                         zip(self.weights, total_weight_derivs)]
-        #print("New weights: ", self.weights)
-        #print(f"total_weight_derivs: {total_weight_derivs}")
-        #print(f"total_bias_derivs: ", total_bias_derivs)
         self.biases = [b - learn_rate * (tbd / n) for b, tbd in
                         zip(self.biases, total_bias_derivs)]
-        #fucking problem here biases is being minused as a row not number fuck
-        #print("New biases: ", self.biases)
 
     def train(self, epochs, learn_rate, batch_size, train_data, test_data=None):
         """Function called to train the neural network which splits up the
@@ -179,13 +142,9 @@ class NeuralNetwork():
         for epoch in range(epochs):
             random.shuffle(train_data)
             batches = [train_data[part:part+batch_size] for part in range(0, len(train_data), batch_size)]
-            #batch = [random.choice(train_data) for i in range(batch_size)]
 
             for batch in batches:
                 self.batch_gradient_descent(batch, learn_rate)
-
-            #print(f"Epoch {epoch + 1} weights: {self.weights}")
-            #print(f"Epoch {epoch + 1} biases: {self.biases}")
 
             if(test_data):
                 print(f"Epoch {epoch + 1} complete. Accuracy: {self.evaluate(test_data)}")
@@ -212,7 +171,6 @@ class NeuralNetwork():
                 if(result[neuron] > result[guess]):
                     guess = neuron
             #Comparing the guess to y
-            #print(guess)
             if(guess == np.where(test[1] == 1)[0][0]):
                 print(guess, np.where(test[1] == 1)[0][0])
                 correct_guesses += 1
@@ -225,9 +183,6 @@ class NeuralNetwork():
         for i in range(len(y)):
             deriv.append(a[i] - y[i])
 
-        #print("y:",y)
-        #print("a:",a)
-        #print("deriv:", np.array(deriv))
         return np.array(deriv)
 
     def sigmoid(self, z):
@@ -237,10 +192,3 @@ class NeuralNetwork():
         """Derivative of sigmoid."""
         return self.sigmoid(z) * (1.0 - self.sigmoid(z))
 
-#tests
-"""test = NeuralNetwork([2,3,3])
-print("Weights: ")
-pprint.pprint(test.weights)
-print("Biases: ")
-pprint.pprint(test.biases)
-print("Feedforward: ", str(test.feedforward(np.array([1, 2]))))"""
